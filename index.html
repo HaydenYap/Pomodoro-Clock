@@ -1,0 +1,110 @@
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.4.2/react.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.4.2/react-dom.js"></script>
+  <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.0/redux.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.0/redux.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-redux/5.0.7/react-redux.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-redux/5.0.7/react-redux.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.21.1/babel.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+</head>
+
+<div id="root"> </div>
+
+<script type="text/babel">
+
+  const increment = 'INCREMENT';
+  const decrement = 'DECREMENT';
+
+
+  class Counter extends React.Component{
+    constructor(props){
+      super(props);
+      this.handleClick = this.handleClick.bind(this);
+    }
+
+    //handle INCREMENT
+    //handle DECREMENT
+
+    handleClick(){
+      console.log("clicK");
+    }
+
+    render(){
+      var label = this.props.id + "-label"
+      var decrement = this.props.id+"-decrement"
+      var increment = this.props.id +"-increment"
+      var length = this.props.id+"-length"
+      return(
+        <div id={this.props.id}>
+          <div id={label}>
+            {this.props.id[0].toUpperCase() + this.props.id.substr(1)} Length
+          </div>
+          <div className="count-control">
+            <div id={decrement} onClick={this.handleClick}>
+                <i className="fas fa-minus"></i>
+              </div>
+            <div id={increment} onClick={this.handleClick}>
+              <i className="fas fa-plus"></i>
+            </div>
+          </div>
+          <div id={length}>Time setting for {this.props.id}</div>
+        </div>
+      )
+    }
+  }
+
+
+  class Timer extends React.Component{
+    constructor(props){
+      super(props);
+
+    }
+
+    // handle start_stop
+
+    render(){
+      return(
+        <div id="timer">
+          <div id="timer-label">
+            time label for either "session" or "break"
+          </div>
+          <div id="time-left">
+            time left for specific timer
+          </div>
+          <div id="start_stop">
+            <i className="fas fa-play"></i>
+            <i className="fas fa-stop"></i>
+          </div>
+          <div id="reset">
+            <i className="fas fa-undo"></i>
+          </div>
+        </div>
+      )
+    }
+  }
+
+  class Root extends React.Component{
+    constructor(props){
+      super(props);
+    }
+
+    render(){
+      return(
+      <div>
+        <Counter id="break"/>
+        <Counter id="session"/>
+        <Timer />
+      </div>
+      )
+    }
+  }
+
+
+
+  ReactDOM.render(<Root />, document.getElementById("root"));
+</script>
