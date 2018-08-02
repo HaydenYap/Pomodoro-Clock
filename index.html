@@ -89,11 +89,13 @@
       case INCREMENT:
         if (action.counter == newState.counter){
           newState.minLeft += 1;
+          newState.secLeft = 0;
         }
         return newState;
       case DECREMENT:
         if (action.counter == newState.counter){
           newState.minLeft -= 1;
+          newState.secLeft = 0;
         }
         return newState;
       case START:
@@ -107,6 +109,9 @@
           } else {
             newState.secLeft -=1;
           }
+        }
+        if (newState.minLeft == 0 && newState.minLeft == 0){
+          newState.timerDone = true;
         }
         return newState
       case RESET:
@@ -129,9 +134,21 @@
     // only allow increment/decrement to change remaining time ONLY when timer is not running
     // any change to timer will automatically set the seconds to 0
     console.log(action);
-    if ((action.type == INCREMENT || action.type == DECREMENT) && store.getState().timer.run == false){
-      next(action);
+    if (action.type == INCREMENT || action.type == DECREMENT){
+      if (store.getState().timer.run == false){
+        next(action);
+        store.getState().timer.minLeft = store.getState().counters[store.getState().timer.counter]
+      }
     } else{
+      if (store.getState().timer.timerDone == true){
+        if (store.getState().timer.counter == "session"){
+          store.getState().timer.counter = "break";
+        } else {
+          store.getState().timer.counter = "session";
+        }
+        store.getState().timer.minLeft = store.getState().counters[store.getState().timer.counter];
+        store.getState().timer.timerDone = false;
+      }
       next(action)
     }
   }
