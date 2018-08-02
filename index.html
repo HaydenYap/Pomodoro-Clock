@@ -9,6 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.21.1/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/redux-thunk/2.3.0/redux-thunk.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
 </head>
@@ -17,21 +18,145 @@
 
 <script type="text/babel">
 
-  const increment = 'INCREMENT';
-  const decrement = 'DECREMENT';
+  const INCREMENT = 'INCREMENT';
+  const DECREMENT = 'DECREMENT';
+  const RESET = 'RESET';
 
+  const inc = (counter) => {
+    var count ;
+    if (counter == "break-increment"){
+      count = "break"
+    } else {
+      count = "session"
+    }
+    return {type: INCREMENT,
+            counter: count}
+  }
+
+  const dec = (counter) => {
+    var count ;
+    if (counter == "break-decrement"){
+      count = "break"
+    } else {
+      count = "session"
+    }
+    return {type: DECREMENT,
+            counter: count}
+  }
+
+  const counterReducer = (state ={break: 5, session: 25}, action) =>{
+    var newState = Object.assign({},state)
+    switch (action.type){
+      case INCREMENT:
+        if (newState[action.counter] == 60){
+          return state;
+        }
+        newState[action.counter] +=  1;
+        return newState;
+      case DECREMENT:
+        if (newState[action.counter] == 0){
+          return state;
+        }
+        newState[action.counter] -=1;
+        return newState;
+      case RESET:
+          newState.break = 5;
+          newState.session = 25;
+      return newState;    
+      default:
+        return state;
+    }
+  }
+
+  const START = 'START';
+  const COUNTDOWN = 'COUNTDOWN';
+
+  const start = () =>{
+    return {type: START}
+  }
+
+  const reset = () =>{
+    return {type: RESET}
+  }
+
+  const timerReducer =(state = {minLeft: 25, secLeft: 0, counter: "session", run: false}, action) => {
+    var newState = Object.assign({}, state);
+    switch(action.type){
+      case INCREMENT:
+        if (action.counter == newState.counter){
+          newState.minLeft += 1;
+        }
+        return newState;
+      case DECREMENT:
+        if (action.counter == newState.counter){
+          newState.minLeft -= 1;
+        }
+        return newState;
+      case START:
+        newState.run = !newState.run;
+        return newState;
+      case COUNTDOWN:
+        if(newState.minLeft != 0){
+          if (newState.secLeft == 0){
+            newState.secLeft = 59;
+            newState.minLeft -= 1;
+          } else {
+            newState.secLeft -=1;
+          }
+        }
+        return newState
+      case RESET:
+        newState.minLeft =25;
+        newState.secLeft = 0;
+        newState.counter = "session";
+        newState.run= false;
+        return newState;
+      default:
+        return state;
+    }
+  }
+
+  const rootReducer = Redux.combineReducers({
+    counters: counterReducer,
+    timer: timerReducer
+  })
+
+  const shared = (store) => (next) => (action) =>{
+    // only allow increment/decrement to change remaining time ONLY when timer is not running
+    // any change to timer will automatically set the seconds to 0
+    console.log(action);
+    if ((action.type == INCREMENT || action.type == DECREMENT) && store.getState().timer.run == false){
+      next(action);
+    } else{
+      next(action)
+    }
+  }
+
+  const middleware = Redux.applyMiddleware(shared)
+
+  const store = Redux.createStore(rootReducer,middleware);
 
   class Counter extends React.Component{
     constructor(props){
       super(props);
       this.handleClick = this.handleClick.bind(this);
+      this.handleIncrement = this.handleIncrement.bind(this);
+      this.handleDecrement = this.handleDecrement.bind(this);
     }
 
     //handle INCREMENT
+    handleIncrement(e){
+      this.props.submitIncrement(e.currentTarget.id);
+      console.log("incrementing for " + e.currentTarget.id)
+    }
     //handle DECREMENT
+    handleDecrement(e){
+      this.props.submitDecrement(e.currentTarget.id);
+      console.log("decrementing for " + e.currentTarget.id)
+    }
 
-    handleClick(){
-      console.log("clicK");
+    handleClick(e){
+      console.log(e.currentTarget.id);
     }
 
     render(){
@@ -42,45 +167,52 @@
       return(
         <div id={this.props.id}>
           <div id={label}>
-            {this.props.id[0].toUpperCase() + this.props.id.substr(1)} Length
+            {capitalize(this.props.id)} Length
           </div>
           <div className="count-control">
-            <div id={decrement} onClick={this.handleClick}>
+            <div id={decrement} onClick={this.handleDecrement}>
                 <i className="fas fa-minus"></i>
               </div>
-            <div id={increment} onClick={this.handleClick}>
+            <div id={increment} onClick={this.handleIncrement}>
               <i className="fas fa-plus"></i>
             </div>
           </div>
-          <div id={length}>Time setting for {this.props.id}</div>
+          <div id={length}>{store.getState().counters[this.props.id]}</div>
         </div>
       )
     }
   }
 
-
   class Timer extends React.Component{
     constructor(props){
       super(props);
-
+      this.handleStartStop = this.handleStartStop.bind(this);
+      this.handleReset = this.handleReset.bind(this);
     }
 
     // handle start_stop
+    handleStartStop(){
+      this.props.submitStart();
+    }
+    //handel reset
+    handleReset(){
+      this.props.submitReset();
+    }
 
     render(){
       return(
         <div id="timer">
           <div id="timer-label">
-            time label for either "session" or "break"
+            {capitalize(store.getState().timer.counter)}:
           </div>
           <div id="time-left">
-            time left for specific timer
+            {twoDigitPadding(store.getState().timer.minLeft)}:{twoDigitPadding(store.getState().timer.secLeft)}
           </div>
-          <div id="start_stop">
+          <div id="start_stop" onClick={this.handleStartStop}>
             <i className="fas fa-play"></i>
             <i className="fas fa-stop"></i>
           </div>
-          <div id="reset">
+          <div id="reset" onClick={this.handleReset}>
             <i className="fas fa-undo"></i>
           </div>
         </div>
@@ -94,17 +226,58 @@
     }
 
     render(){
+      console.log(store.getState())
       return(
       <div>
-        <Counter id="break"/>
-        <Counter id="session"/>
-        <Timer />
+        <Counter id="break" submitDecrement={this.props.submitDecrement} submitIncrement={this.props.submitIncrement}/>
+        <Counter id="session" submitDecrement={this.props.submitDecrement} submitIncrement={this.props.submitIncrement}/>
+        <Timer submitStart={this.props.submitStart} submitReset={this.props.submitReset}/>
       </div>
       )
     }
   }
 
+  const mapStateToProps= (state) => {
+    return {counters: state.counters,
+            timer: state.timer}
+  };
 
+  const mapDispatchToProps = (dispatch) =>{
+    return {
+        submitIncrement: (counter) => {dispatch(inc(counter))},
+        submitDecrement: (counter) => {dispatch(dec(counter))},
+        submitStart: () =>{dispatch(start())},
+        submitReset: () =>{dispatch(reset())}
+    }
+  };
 
-  ReactDOM.render(<Root />, document.getElementById("root"));
+  const Provider = ReactRedux.Provider;
+  const connect = ReactRedux.connect;
+
+  const Container = connect(mapStateToProps,mapDispatchToProps)(Root);
+
+  class AppWrapper extends React.Component {
+    render() {
+      return (
+        <Provider store={store}>
+          <Container />
+        </Provider>
+      );
+    }
+  };
+
+  ReactDOM.render(<AppWrapper />, document.getElementById('root'))
+
+  //formating functions
+  function twoDigitPadding(digit){
+    if (digit < 10){
+      return '0' + digit;
+    } else {
+      return digit;
+    }
+  }
+
+  function capitalize(string){
+    return string[0].toUpperCase() + string.substr(1);
+  }
 </script>
