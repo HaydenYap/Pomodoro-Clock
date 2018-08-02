@@ -102,15 +102,13 @@
         newState.run = !newState.run;
         return newState;
       case COUNTDOWN:
-        if(newState.minLeft != 0){
-          if (newState.secLeft == 0){
-            newState.secLeft = 59;
-            newState.minLeft -= 1;
-          } else {
-            newState.secLeft -=1;
-          }
+        if (newState.secLeft == 0){
+          newState.secLeft = 59;
+          newState.minLeft -= 1;
+        } else {
+          newState.secLeft -=1;
         }
-        if (newState.minLeft == 0 && newState.minLeft == 0){
+        if (newState.minLeft == 0 && newState.secLeft == 0){
           newState.timerDone = true;
         }
         return newState
@@ -131,8 +129,6 @@
   })
 
   const shared = (store) => (next) => (action) =>{
-    // only allow increment/decrement to change remaining time ONLY when timer is not running
-    // any change to timer will automatically set the seconds to 0
     console.log(action);
     if (action.type == INCREMENT || action.type == DECREMENT){
       if (store.getState().timer.run == false){
