@@ -44,6 +44,10 @@
             counter: count}
   }
 
+  const reset = () =>{
+    return {type: RESET}
+  }
+
   const counterReducer = (state ={break: 5, session: 25}, action) =>{
     var newState = Object.assign({},state)
     switch (action.type){
@@ -62,7 +66,7 @@
       case RESET:
           newState.break = 5;
           newState.session = 25;
-      return newState;    
+      return newState;
       default:
         return state;
     }
@@ -75,11 +79,11 @@
     return {type: START}
   }
 
-  const reset = () =>{
-    return {type: RESET}
+  const countdown = () =>{
+    return {type: COUNTDOWN}
   }
 
-  const timerReducer =(state = {minLeft: 25, secLeft: 0, counter: "session", run: false}, action) => {
+  const timerReducer =(state = {minLeft: 25, secLeft: 0, counter: "session", run: false, timerDone: false}, action) => {
     var newState = Object.assign({}, state);
     switch(action.type){
       case INCREMENT:
@@ -192,7 +196,17 @@
 
     // handle start_stop
     handleStartStop(){
+      var that = this;
       this.props.submitStart();
+      if (store.getState().timer.run == true){
+        var timer = window.setInterval(function(){
+          if (store.getState().timer.run == false){
+            clearInterval(timer);
+          } else {
+            that.props.submitCountdown();
+          }
+        },1000)
+      }
     }
     //handel reset
     handleReset(){
@@ -231,7 +245,7 @@
       <div>
         <Counter id="break" submitDecrement={this.props.submitDecrement} submitIncrement={this.props.submitIncrement}/>
         <Counter id="session" submitDecrement={this.props.submitDecrement} submitIncrement={this.props.submitIncrement}/>
-        <Timer submitStart={this.props.submitStart} submitReset={this.props.submitReset}/>
+        <Timer submitStart={this.props.submitStart} submitReset={this.props.submitReset} submitCountdown={this.props.submitCountdown}/>
       </div>
       )
     }
@@ -247,6 +261,7 @@
         submitIncrement: (counter) => {dispatch(inc(counter))},
         submitDecrement: (counter) => {dispatch(dec(counter))},
         submitStart: () =>{dispatch(start())},
+        submitCountdown: () =>{dispatch(countdown())},
         submitReset: () =>{dispatch(reset())}
     }
   };
