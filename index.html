@@ -1,15 +1,11 @@
 <head>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.4.2/react.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.4.2/react-dom.js"></script>
-  <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.0/redux.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.0/redux.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-redux/5.0.7/react-redux.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-redux/5.0.7/react-redux.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.21.1/babel.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/redux-thunk/2.3.0/redux-thunk.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
 </head>
@@ -17,7 +13,6 @@
 <div id="root"> </div>
 
 <script type="text/babel">
-
   const INCREMENT = 'INCREMENT';
   const DECREMENT = 'DECREMENT';
   const RESET = 'RESET';
@@ -58,7 +53,7 @@
         newState[action.counter] +=  1;
         return newState;
       case DECREMENT:
-        if (newState[action.counter] == 0){
+        if (newState[action.counter] == 1){
           return state;
         }
         newState[action.counter] -=1;
@@ -130,22 +125,26 @@
 
   const shared = (store) => (next) => (action) =>{
     console.log(action);
-    if (action.type == INCREMENT || action.type == DECREMENT){
-      if (store.getState().timer.run == false){
+    var audio = new Audio($("#beep").attr("src"));
+    if (action.type == INCREMENT || action.type == DECREMENT){ // when incrementing or decrmening
+      if (store.getState().timer.run == false){ // only allow change if the timer is not running,
         next(action);
-        store.getState().timer.minLeft = store.getState().counters[store.getState().timer.counter]
+        store.getState().timer.minLeft = store.getState().counters[store.getState().timer.counter];
       }
     } else{
-      if (store.getState().timer.timerDone == true){
-        if (store.getState().timer.counter == "session"){
+      if (store.getState().timer.timerDone == true){  // if a timer is done then
+        audio.play(); // play beep
+        if (store.getState().timer.counter == "session"){ // if current timer is session switch to break
           store.getState().timer.counter = "break";
-        } else {
+          changeColor();
+        } else {  // if current timer is break switch to session
           store.getState().timer.counter = "session";
+          changeColor();
         }
-        store.getState().timer.minLeft = store.getState().counters[store.getState().timer.counter];
-        store.getState().timer.timerDone = false;
+        store.getState().timer.minLeft = store.getState().counters[store.getState().timer.counter]; // change timer to appropiate number
+        store.getState().timer.timerDone = false; // reset timer so it is not done
       }
-      next(action)
+      next(action);
     }
   }
 
@@ -181,20 +180,23 @@
       var decrement = this.props.id+"-decrement"
       var increment = this.props.id +"-increment"
       var length = this.props.id+"-length"
+      var count = this.props.id+"-count"
       return(
-        <div id={this.props.id}>
-          <div id={label}>
+        <div id={this.props.id} className="pill">
+          <div id={label} className="label">
             {capitalize(this.props.id)} Length
           </div>
-          <div className="count-control">
-            <div id={decrement} onClick={this.handleDecrement}>
-                <i className="fas fa-minus"></i>
-              </div>
-            <div id={increment} onClick={this.handleIncrement}>
+          <div id={count} className="count">
+            <div id={length}>{store.getState().counters[this.props.id]}</div>
+          </div>
+          <div className="control">
+            <div id={decrement} className="control-button" onClick={this.handleDecrement}>
+              <i className="fas fa-minus"></i>
+            </div>
+            <div id={increment} className="control-button" onClick={this.handleIncrement}>
               <i className="fas fa-plus"></i>
             </div>
           </div>
-          <div id={length}>{store.getState().counters[this.props.id]}</div>
         </div>
       )
     }
@@ -227,20 +229,23 @@
     }
 
     render(){
+      var startStop = store.getState().timer.run ? <i className="fas fa-stop"></i> : <i className="fas fa-play"></i>
       return(
-        <div id="timer">
-          <div id="timer-label">
+        <div id="timer" className="pill">
+          <div id="timer-label" className="label">
             {capitalize(store.getState().timer.counter)}:
           </div>
-          <div id="time-left">
+          <div id="time-left" className="count">
             {twoDigitPadding(store.getState().timer.minLeft)}:{twoDigitPadding(store.getState().timer.secLeft)}
           </div>
-          <div id="start_stop" onClick={this.handleStartStop}>
-            <i className="fas fa-play"></i>
-            <i className="fas fa-stop"></i>
-          </div>
-          <div id="reset" onClick={this.handleReset}>
-            <i className="fas fa-undo"></i>
+          <audio src="sound/beepSound.wav" preload="auto" className="beepAudio" id="beep" />
+          <div className="control">
+            <div id="start_stop" className="control-button" onClick={this.handleStartStop}>
+              {startStop}
+            </div>
+            <div id="reset" className="control-button" onClick={this.handleReset}>
+              <i className="fas fa-undo"></i>
+            </div>
           </div>
         </div>
       )
@@ -255,9 +260,13 @@
     render(){
       console.log(store.getState())
       return(
-      <div>
-        <Counter id="break" submitDecrement={this.props.submitDecrement} submitIncrement={this.props.submitIncrement}/>
-        <Counter id="session" submitDecrement={this.props.submitDecrement} submitIncrement={this.props.submitIncrement}/>
+      <div id="app">
+        <div id="title"> Pomodoro Clock </div>
+        <div id="by"> by Hayden Yap </div>
+        <div id="counters">
+          <Counter id="break" submitDecrement={this.props.submitDecrement} submitIncrement={this.props.submitIncrement}/>
+          <Counter id="session" submitDecrement={this.props.submitDecrement} submitIncrement={this.props.submitIncrement}/>
+        </div>
         <Timer submitStart={this.props.submitStart} submitReset={this.props.submitReset} submitCountdown={this.props.submitCountdown}/>
       </div>
       )
@@ -308,4 +317,23 @@
   function capitalize(string){
     return string[0].toUpperCase() + string.substr(1);
   }
+
+  function randomColorValue(){
+    return Math.floor(Math.random() * 256).toString(16);
+  }
+
+  function changeColor(){
+    var red = randomColorValue();
+    var green = randomColorValue();
+    var blue = randomColorValue();
+    while(blue == red && blue == green ){
+      blue = randomColorValue();
+    }
+    var color = (("#".concat(red)).concat(green)).concat(blue);
+    $("html body").animate({backgroundColor: color, color: color},1000);
+  }
+
+  $(document).ready(function(){
+    changeColor()
+  })
 </script>
